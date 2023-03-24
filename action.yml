@@ -1,13 +1,34 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+name: 'Sign File on Windows'
+
+description: 'Sign a file using SSL.com CodeSignTool v2'
+
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
+  filepath:
+    description: 'File to be signed'
     required: true
-    default: '1000'
-outputs:
-  time: # output will be available to future steps
-    description: 'The current time after waiting'
+  sslusername:
+    description: 'SSL.com account username'
+    required: true
+  sslpassword:
+    description: 'SSL.com account password'
+    required: true
+  sslsecretpassword:
+    description: 'SSL.com account TOTP secret'
+    required: true
+  sslclientid:
+    description: 'SSL.com account Client Id'
+    required: true
+  istest:
+    description: 'When true, runs against SSL.com sandbox account'
+    required: false
+    default: false
 runs:
   using: 'node16'
   main: 'dist/index.js'
+  args:
+    - ${{ inputs.filepath }}
+    - ${{ inputs.sslusername }}
+    - ${{ inputs.sslpassword }}
+    - ${{ inputs.sslsecretpassword }}
+    - ${{ inputs.sslclientid }}
+    - ${{ inputs.istest }}

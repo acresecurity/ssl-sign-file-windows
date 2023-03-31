@@ -1,8 +1,6 @@
 node_modules/
 CodeSignTool-v1.2.7-windows/
 
-dist/
-
 # Editors
 .vscode/
 .idea/

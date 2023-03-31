@@ -19719,18 +19719,21 @@ async function run() {
           fs.mkdirSync(`./${folder}/ssl-output`);
         }
 
-        core.info(process.env.CODE_SIGN_TOOL_PATH);
+        core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
         process.env.CODE_SIGN_TOOL_PATH = path.join(__dirname + `/${folder}/`);
-        core.info(process.env.CODE_SIGN_TOOL_PATH);
+        core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
 
         if (isTest) {
           core.info("\tRUNNING TEST");
           const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
+          core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
+          var confLocation = __nccwpck_require__.ab + "ssl-sign-file-windows/" + folder + '//conf//code_sign_tool.properties';
+          core.info("confLocation: " + confLocation);
+          var confLocation2 = __nccwpck_require__.ab + "ssl-sign-file-windows/" + process.env.CODE_SIGN_TOOL_PATH + '//conf//code_sign_tool.properties';
+          core.info("confLocation2: " + confLocation2);
+
           try {
-            fs.writeFileSync(
-              __nccwpck_require__.ab + "ssl-sign-file-windows/" + folder + '//conf//code_sign_tool.properties',
-              content
-            );
+            fs.writeFileSync(confLocation, content);
             // file written successfully
           } catch (err) {
             core.error(err);

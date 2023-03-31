@@ -67,20 +67,26 @@ async function run() {
           fs.mkdirSync(`./${folder}/ssl-output`);
         }
 
-        core.info(process.env.CODE_SIGN_TOOL_PATH);
+        core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
         process.env.CODE_SIGN_TOOL_PATH = path.join(__dirname + `/${folder}/`);
-        core.info(process.env.CODE_SIGN_TOOL_PATH);
+        core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
 
         if (isTest) {
           core.info("\tRUNNING TEST");
           const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
+          core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
+          var confLocation = path.join(
+            __dirname + `\\${folder}\\conf\\code_sign_tool.properties`
+          );
+          core.info("confLocation: " + confLocation);
+          var confLocation2 = path.join(
+            __dirname +
+              `\\${process.env.CODE_SIGN_TOOL_PATH}\\conf\\code_sign_tool.properties`
+          );
+          core.info("confLocation2: " + confLocation2);
+
           try {
-            fs.writeFileSync(
-              path.join(
-                __dirname + `\\${folder}\\conf\\code_sign_tool.properties`
-              ),
-              content
-            );
+            fs.writeFileSync(confLocation, content);
             // file written successfully
           } catch (err) {
             core.error(err);

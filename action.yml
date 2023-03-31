@@ -25,10 +25,3 @@ inputs:
 runs:
   using: 'node16'
   main: 'dist/index.js'
-  args:
-    - ${{ inputs.filepath }}
-    - ${{ inputs.sslusername }}
-    - ${{ inputs.sslpassword }}
-    - ${{ inputs.sslsecretpassword }}
-    - ${{ inputs.sslclientid }}
-    - ${{ inputs.istest }}

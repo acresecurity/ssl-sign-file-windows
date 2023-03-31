@@ -77,7 +77,7 @@ async function run() {
           try {
             fs.writeFileSync(
               path.join(
-                __dirname + `/${folder}/conf/code_sign_tool.properties`
+                __dirname + `\\${folder}\\conf\\code_sign_tool.properties`
               ),
               content
             );

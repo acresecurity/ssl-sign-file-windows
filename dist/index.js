@@ -19729,11 +19729,15 @@ async function run() {
           core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
           var confLocation = __nccwpck_require__.ab + "ssl-sign-file-windows/" + folder + '//conf//code_sign_tool.properties';
           core.info("confLocation: " + confLocation);
-          var confLocation2 = __nccwpck_require__.ab + "ssl-sign-file-windows/" + process.env.CODE_SIGN_TOOL_PATH + '//conf//code_sign_tool.properties';
+          var confLocation2 = path.join(
+            process.env.CODE_SIGN_TOOL_PATH,
+            "conf",
+            "code_sign_tool.properties"
+          );
           core.info("confLocation2: " + confLocation2);
 
           try {
-            fs.writeFileSync(confLocation, content);
+            fs.writeFileSync(confLocation2, content);
             // file written successfully
           } catch (err) {
             core.error(err);

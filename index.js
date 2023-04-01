@@ -80,13 +80,14 @@ async function run() {
           );
           core.info("confLocation: " + confLocation);
           var confLocation2 = path.join(
-            __dirname +
-              `\\${process.env.CODE_SIGN_TOOL_PATH}\\conf\\code_sign_tool.properties`
+            process.env.CODE_SIGN_TOOL_PATH,
+            "conf",
+            "code_sign_tool.properties"
           );
           core.info("confLocation2: " + confLocation2);
 
           try {
-            fs.writeFileSync(confLocation, content);
+            fs.writeFileSync(confLocation2, content);
             // file written successfully
           } catch (err) {
             core.error(err);

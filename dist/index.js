@@ -19674,7 +19674,7 @@ async function run() {
     );
     core.info(`Running with sslClientId: [${sslClientId}]...`);
     const zipFile = "CodeSignTool.zip";
-    const zipFileLocation = "./dist/CodeSignTool.zip";
+    const zipFileLocation = "dist/CodeSignTool.zip";
 
     const extractEntryTo = `./`;
     const outputDir = `./`;

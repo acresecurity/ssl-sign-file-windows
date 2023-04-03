@@ -35,10 +35,10 @@ async function run() {
         core.setFailed(error.message);
         return;
       })
-      .pipe(fs.createWriteStream(zipFileLocation))
+      .pipe(fs.createWriteStream(zipFile))
       .on("finish", function () {
         core.info("finished downloading zip");
-        var zip = new admZip(zipFileLocation);
+        var zip = new admZip(zipFile);
         core.info("start unzip");
         zip.extractAllTo("./dist/", true);
         core.info("finished unzip");

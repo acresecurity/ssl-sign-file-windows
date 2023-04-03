@@ -71,6 +71,23 @@ async function run() {
 
         if (isTest) {
           core.info("\tRUNNING TEST");
+          exec("pwd", function (err, stdout, stderr) {
+            core.info("PWD:  " + stdout);
+            core.error(stderr);
+          });
+          exec("ls ", function (err, stdout, stderr) {
+            core.info("ls:  " + stdout);
+            core.error(stderr);
+          });
+
+          exec(
+            `ls ${process.env.CODE_SIGN_TOOL_PATH}`,
+            function (err, stdout, stderr) {
+              core.info("ls CODE_SIGN_TOOL_PATH:  " + stdout);
+              core.error(stderr);
+            }
+          );
+
           const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
           var confLocation2 = path.join(
             process.env.CODE_SIGN_TOOL_PATH,
@@ -87,15 +104,7 @@ async function run() {
             core.setFailed(err);
             return;
           }
-          // const outputDir = path.join(__dirname + `/${folder}/ssl-output\\`);
-          // core.info("outputDir: " + outputDir);
-          // exec(
-          //   "ls CodeSignTool-v1.2.7-windows/ssl-output",
-          //   function (err, stdout, stderr) {
-          //     core.info(stdout);
-          //     core.error(stderr);
-          //   }
-          // );
+
           exec(
             path.join(
               process.env.CODE_SIGN_TOOL_PATH,

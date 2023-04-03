@@ -19732,13 +19732,10 @@ async function run() {
             core.error(stderr);
           });
 
-          exec(
-            `ls ${process.env.CODE_SIGN_TOOL_PATH}`,
-            function (err, stdout, stderr) {
-              core.info("ls CODE_SIGN_TOOL_PATH:  " + stdout);
-              core.error(stderr);
-            }
-          );
+          exec(`ls dist/`, function (err, stdout, stderr) {
+            core.info("ls dist:  " + stdout);
+            core.error(stderr);
+          });
 
           const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
           var confLocation2 = path.join(

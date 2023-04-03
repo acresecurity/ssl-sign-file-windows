@@ -22,6 +22,8 @@ async function run() {
     );
     core.info(`Running with sslClientId: [${sslClientId}]...`);
     const zipFile = "CodeSignTool.zip";
+    const zipFileLocation = "./dist/CodeSignTool.zip";
+
     const extractEntryTo = `./`;
     const outputDir = `./`;
 
@@ -29,24 +31,19 @@ async function run() {
     request
       .get("https://www.ssl.com/download/codesigntool-for-windows/")
       .on("error", function (error) {
+        core.error(error);
         core.setFailed(error.message);
         return;
       })
-      .pipe(fs.createWriteStream(zipFile))
+      .pipe(fs.createWriteStream(zipFileLocation))
       .on("finish", function () {
-        // wait(2000);
         core.info("finished downloading zip");
-        // var zip = new admZip(zipFile);
-        // core.info("start unzip");
-        // zip.extractEntryTo(extractEntryTo, outputDir, false, true);
-        // core.info("finished unzip");
-
-        var zip = new admZip(zipFile);
+        var zip = new admZip(zipFileLocation);
         core.info("start unzip");
-        zip.extractAllTo(".", true);
+        zip.extractAllTo("./dist/", true);
         core.info("finished unzip");
         let foundUnzipped = fs
-          .readdirSync("./")
+          .readdirSync("./dist/")
           .filter((fn) => fn.startsWith("CodeSignTool-v"));
         if (!foundUnzipped || foundUnzipped.length == 0) {
           core.warning(
@@ -63,22 +60,18 @@ async function run() {
         const folder = foundUnzipped[0];
         core.info(`Using folder: ${folder}`);
 
-        if (!fs.existsSync(`./${folder}/ssl-output`)) {
-          fs.mkdirSync(`./${folder}/ssl-output`);
+        if (!fs.existsSync(`./dist/${folder}/ssl-output`)) {
+          fs.mkdirSync(`./dist/${folder}/ssl-output`);
         }
 
-        core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
+        core.info("CODE_SIGN_TOOL_PATH: \t" + process.env.CODE_SIGN_TOOL_PATH);
         process.env.CODE_SIGN_TOOL_PATH = path.join(__dirname + `/${folder}/`);
-        core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
+        core.info("CODE_SIGN_TOOL_PATH: \t" + process.env.CODE_SIGN_TOOL_PATH);
+        core.info("__dirname: \t" + __dirname);
 
         if (isTest) {
           core.info("\tRUNNING TEST");
           const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
-          core.info("CODE_SIGN_TOOL_PATH: " + process.env.CODE_SIGN_TOOL_PATH);
-          var confLocation = path.join(
-            __dirname + `\\${folder}\\conf\\code_sign_tool.properties`
-          );
-          core.info("confLocation: " + confLocation);
           var confLocation2 = path.join(
             process.env.CODE_SIGN_TOOL_PATH,
             "conf",
@@ -94,19 +87,19 @@ async function run() {
             core.setFailed(err);
             return;
           }
-          const outputDir = path.join(__dirname + `/${folder}/ssl-output\\`);
-          core.info("outputDir: " + outputDir);
-          exec(
-            "ls CodeSignTool-v1.2.7-windows/ssl-output",
-            function (err, stdout, stderr) {
-              core.info(stdout);
-              core.error(stderr);
-            }
-          );
+          // const outputDir = path.join(__dirname + `/${folder}/ssl-output\\`);
+          // core.info("outputDir: " + outputDir);
+          // exec(
+          //   "ls CodeSignTool-v1.2.7-windows/ssl-output",
+          //   function (err, stdout, stderr) {
+          //     core.info(stdout);
+          //     core.error(stderr);
+          //   }
+          // );
           exec(
             path.join(
-              __dirname +
-                `/${folder}/CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`
+              process.env.CODE_SIGN_TOOL_PATH,
+              `CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`
             ),
             function (err, stdout, stderr) {
               if (err || stderr) {

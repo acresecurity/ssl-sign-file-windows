@@ -19714,13 +19714,13 @@ async function run() {
 
         exec("pwd", function (err, stdout, stderr) {
           core.info("PWD:  " + stdout);
-          const pwd = stdout;
+          const pwd = stdout.trim();
           core.error(stderr);
 
           core.info(
             "CODE_SIGN_TOOL_PATH: \t" + process.env.CODE_SIGN_TOOL_PATH
           );
-          process.env.CODE_SIGN_TOOL_PATH = path.join(pwd, `/${folder}/`);
+          process.env.CODE_SIGN_TOOL_PATH = `${pwd}/dist/${folder}`;
           core.info(
             "CODE_SIGN_TOOL_PATH: \t" + process.env.CODE_SIGN_TOOL_PATH
           );
@@ -19729,15 +19729,32 @@ async function run() {
           if (isTest) {
             core.info("\tRUNNING TEST");
 
-            exec("ls ", function (err, stdout, stderr) {
-              core.info("ls:  " + stdout);
-              core.error(stderr);
+            exec(`ls ${pwd}`, function (err, stdout, stderr) {
+              core.info(`------ls ${pwd}---   ` + stdout);
             });
 
-            exec(`ls dist/`, function (err, stdout, stderr) {
-              core.info("ls dist:  " + stdout);
-              core.error(stderr);
+            exec(`ls ${pwd}/dist`, function (err, stdout, stderr) {
+              core.info(`------ls ${pwd}/dist---   ` + stdout);
             });
+
+            exec(`ls ${pwd}/dist/${folder}`, function (err, stdout, stderr) {
+              core.info(
+                `------ls ${pwd}/dist/CodeSignTool-v1.2.7-windows---   ` +
+                  stdout
+              );
+            });
+
+            exec(
+              `ls ${pwd}/dist/${folder}/conf/`,
+              function (err, stdout, stderr) {
+                core.info(
+                  `------ls ${pwd}/dist/CodeSignTool-v1.2.7-windows/conf---   ` +
+                    stdout
+                );
+              }
+            );
+
+            wait(2000);
 
             const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
             var confLocation2 = path.join(
@@ -19748,7 +19765,10 @@ async function run() {
             core.info("confLocation2: " + confLocation2);
 
             try {
-              fs.writeFileSync(confLocation2, content);
+              fs.writeFileSync(
+                `${pwd}/dist/${folder}/conf/code_sign_tool.properties`,
+                content
+              );
               // file written successfully
             } catch (err) {
               core.error(err);

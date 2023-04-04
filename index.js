@@ -120,7 +120,12 @@ async function run() {
                 }
                 // Done.
                 core.info("\tDone SIGNING");
-                core.info(stdout);
+                if (stdout.includes("Error")) {
+                  core.error(stdout);
+                  core.setFailed(stdout);
+                } else {
+                  core.info(stdout);
+                }
 
                 // const files = fs.readdirSync(`./${folder}/ssl-output`);
                 // core.info(`SSL-OUTPUT: ${files}`);

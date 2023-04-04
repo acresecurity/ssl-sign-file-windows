@@ -10,7 +10,7 @@ let exec = require("child_process").exec;
 async function run() {
   try {
     core.info(`START ...`);
-    const filePath = core.getInput("filepath");
+    const filePath = core.getInput("filepath") || "../fake-file.ps1";
     const sslUsername = core.getInput("sslusername");
     const sslPassword = core.getInput("sslpassword");
     const sslSecretPassword = core.getInput("sslsecretpassword");
@@ -123,28 +123,28 @@ async function run() {
                 core.info("\tDone SIGNING");
                 core.info(stdout);
 
-                const files = fs.readdirSync(`./${folder}/ssl-output`);
-                core.info(`SSL-OUTPUT: ${files}`);
+                // const files = fs.readdirSync(`./${folder}/ssl-output`);
+                // core.info(`SSL-OUTPUT: ${files}`);
 
-                files.forEach((file) => {
-                  core.info(__dirname + `/${folder}/ssl-output/` + file);
-                  core.info(path.join(__dirname + file));
+                // files.forEach((file) => {
+                //   core.info(__dirname + `/${folder}/ssl-output/` + file);
+                //   core.info(path.join(__dirname + file));
 
-                  fs.copyFile(
-                    path.join(__dirname + `/${folder}/ssl-output/` + file),
-                    path.join(__dirname + "/" + `${file}.signed`),
-                    (err) => {
-                      if (!err) {
-                        core.info(file + " has been copied!");
-                      } else {
-                        core.error(`COPY FAILED`);
-                        core.error(err);
+                //   fs.copyFile(
+                //     path.join(__dirname + `/${folder}/ssl-output/` + file),
+                //     path.join(__dirname + "/" + `${file}.signed`),
+                //     (err) => {
+                //       if (!err) {
+                //         core.info(file + " has been copied!");
+                //       } else {
+                //         core.error(`COPY FAILED`);
+                //         core.error(err);
 
-                        core.setFailed(error.message);
-                      }
-                    }
-                  );
-                });
+                //         core.setFailed(error.message);
+                //       }
+                //     }
+                //   );
+                // });
               }
             );
           } else {

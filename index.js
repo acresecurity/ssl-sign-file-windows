@@ -35,15 +35,15 @@ async function run() {
         core.setFailed(error.message);
         return;
       })
-      .pipe(fs.createWriteStream(zipFile))
+      .pipe(fs.createWriteStream(__dirname + "/" + zipFile))
       .on("finish", function () {
         core.info("finished downloading zip");
-        var zip = new admZip(zipFile);
+        var zip = new admZip(__dirname + "/" + zipFile);
         core.info("start unzip");
-        zip.extractAllTo("./dist/", true);
+        zip.extractAllTo(__dirname + "/", true);
         core.info("finished unzip");
         let foundUnzipped = fs
-          .readdirSync("./dist/")
+          .readdirSync(__dirname + "/")
           .filter((fn) => fn.startsWith("CodeSignTool-v"));
         if (!foundUnzipped || foundUnzipped.length == 0) {
           core.warning(
@@ -66,11 +66,11 @@ async function run() {
           core.error(stderr);
 
           core.info(
-            "CODE_SIGN_TOOL_PATH: \t" + process.env.CODE_SIGN_TOOL_PATH
+            "CODE_SIGN_TOOL_PATH-before: \t" + process.env.CODE_SIGN_TOOL_PATH
           );
-          process.env.CODE_SIGN_TOOL_PATH = `${pwd}/dist/${folder}`;
+          process.env.CODE_SIGN_TOOL_PATH = `${__dirname}\\${folder}`;
           core.info(
-            "CODE_SIGN_TOOL_PATH: \t" + process.env.CODE_SIGN_TOOL_PATH
+            "CODE_SIGN_TOOL_PATH-after: \t" + process.env.CODE_SIGN_TOOL_PATH
           );
 
           core.info("__dirname: \t" + __dirname);
@@ -81,52 +81,22 @@ async function run() {
           if (isTest) {
             core.info("\tRUNNING TEST");
 
-            exec(`ls ${pwd}`, function (err, stdout, stderr) {
-              core.info(`------ls ${pwd}---   ` + stdout);
-            });
-
-            exec(`ls ${pwd}/dist`, function (err, stdout, stderr) {
-              core.info(`------ls ${pwd}/dist---   ` + stdout);
-            });
-
-            exec(`ls ${pwd}/dist/${folder}`, function (err, stdout, stderr) {
-              core.info(
-                `------ls ${pwd}/dist/CodeSignTool-v1.2.7-windows---   ` +
-                  stdout
-              );
-            });
-
-            exec(
-              `ls ${pwd}/dist/${folder}/conf/`,
-              function (err, stdout, stderr) {
-                core.info(
-                  `------ls ${pwd}/dist/CodeSignTool-v1.2.7-windows/conf---   ` +
-                    stdout
-                );
-              }
-            );
-
             wait(2000);
 
             const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
-            var confLocation2 = path.join(
-              process.env.CODE_SIGN_TOOL_PATH,
-              "conf",
-              "code_sign_tool.properties"
-            );
-            core.info("confLocation2: " + confLocation2);
             exec(
-              `ls ${__dirname}\\${folder}\\conf`,
+              `ls ${process.env.CODE_SIGN_TOOL_PATH}/conf`,
               function (err, stdout, stderr) {
                 core.info(
-                  `------ls ${__dirname}\\${folder}\\conf---   ` + stdout
+                  `------ls ${process.env.CODE_SIGN_TOOL_PATH}/conf---   ` +
+                    stdout
                 );
               }
             );
 
             try {
               fs.writeFileSync(
-                `${__dirname}\\${folder}\\conf\\code_sign_tool.properties`,
+                `${process.env.CODE_SIGN_TOOL_PATH}/conf/code_sign_tool.properties`,
                 content,
                 { encoding: "utf8", flag: "w" }
               );

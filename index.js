@@ -72,7 +72,11 @@ async function run() {
           core.info(
             "CODE_SIGN_TOOL_PATH: \t" + process.env.CODE_SIGN_TOOL_PATH
           );
+
           core.info("__dirname: \t" + __dirname);
+          exec(`ls ${__dirname}`, function (err, stdout, stderr) {
+            core.info(`------ls ${__dirname}---   ` + stdout);
+          });
 
           if (isTest) {
             core.info("\tRUNNING TEST");
@@ -111,11 +115,20 @@ async function run() {
               "code_sign_tool.properties"
             );
             core.info("confLocation2: " + confLocation2);
+            exec(
+              `ls ${__dirname}\\${folder}\\conf`,
+              function (err, stdout, stderr) {
+                core.info(
+                  `------ls ${__dirname}\\${folder}\\conf---   ` + stdout
+                );
+              }
+            );
 
             try {
               fs.writeFileSync(
-                `${pwd}/dist/${folder}/conf/code_sign_tool.properties`,
-                content
+                `${__dirname}\\${folder}\\conf\\code_sign_tool.properties`,
+                content,
+                { encoding: "utf8", flag: "w" }
               );
               // file written successfully
             } catch (err) {

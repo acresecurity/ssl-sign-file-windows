@@ -10,12 +10,19 @@ let exec = require("child_process").exec;
 async function run() {
   try {
     core.info(`START ...`);
-    const filePath = core.getInput("filepath") || "../../fake-file.ps1";
+    const filePath =
+      core.getInput("filepath") ||
+      "C:\\Users\\admin\\git-repos\\ssl-sign-file-windows\\fake-file.ps1";
     const sslUsername = core.getInput("sslusername");
     const sslPassword = core.getInput("sslpassword");
     const sslSecretPassword = core.getInput("sslsecretpassword");
-    const sslClientId = core.getInput("sslclientid");
-    const isTest = core.getInput("istest") || true;
+    const sslClientId =
+      core.getInput("sslclientid") ||
+      "qOUeZCCzSqgA93acB3LYq6lBNjgZdiOxQc-KayC3UMw";
+    const isTestStr = core.getInput("istest") || "true";
+    const isTest = isTestStr !== "false";
+
+    // Sandbox credentials are publicly available at https://www.ssl.com/guide/esigner-demo-credentials-and-certificates/
 
     core.info(
       `Running windows sign action as test: [${isTest}] for [${filePath}] ...`

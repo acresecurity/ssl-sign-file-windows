@@ -19662,7 +19662,7 @@ let exec = __nccwpck_require__(3129).exec;
 async function run() {
   try {
     core.info(`START ...`);
-    const filePath = core.getInput("filepath") || "../fake-file.ps1";
+    const filePath = core.getInput("filepath") || "../../fake-file.ps1";
     const sslUsername = core.getInput("sslusername");
     const sslPassword = core.getInput("sslpassword");
     const sslSecretPassword = core.getInput("sslsecretpassword");
@@ -19758,12 +19758,11 @@ async function run() {
               core.setFailed(err);
               return;
             }
-
+            core.info(
+              `EXEC: \t --  ${process.env.CODE_SIGN_TOOL_PATH}/CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`
+            );
             exec(
-              path.join(
-                process.env.CODE_SIGN_TOOL_PATH,
-                `CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`
-              ),
+              `${process.env.CODE_SIGN_TOOL_PATH}/CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`,
               function (err, stdout, stderr) {
                 if (err || stderr) {
                   core.error(stderr);

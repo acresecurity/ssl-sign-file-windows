@@ -78,82 +78,79 @@ async function run() {
             core.info(`------ls ${__dirname}---   ` + stdout);
           });
 
-          if (isTest) {
-            core.info("\tRUNNING TEST");
+          core.info(`\t${isTest ? "RUNNING TEST" : "RUNNING REAL USE CASE"}`);
 
-            wait(2000);
+          wait(2000);
 
-            const content = `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`;
-            exec(
-              `ls ${process.env.CODE_SIGN_TOOL_PATH}/conf`,
-              function (err, stdout, stderr) {
-                core.info(
-                  `------ls ${process.env.CODE_SIGN_TOOL_PATH}/conf---   ` +
-                    stdout
-                );
-              }
-            );
-
-            try {
-              fs.writeFileSync(
-                `${process.env.CODE_SIGN_TOOL_PATH}/conf/code_sign_tool.properties`,
-                content,
-                { encoding: "utf8", flag: "w" }
+          let content = isTest
+            ? `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`
+            : `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://login.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs.ssl.com\nTSA_URL=http://ts.ssl.com`;
+          exec(
+            `ls ${process.env.CODE_SIGN_TOOL_PATH}/conf`,
+            function (err, stdout, stderr) {
+              core.info(
+                `------ls ${process.env.CODE_SIGN_TOOL_PATH}/conf---   ` +
+                  stdout
               );
-              // file written successfully
-            } catch (err) {
-              core.error(err);
-              core.setFailed(err);
-              return;
             }
-            core.info(
-              `EXEC: \t --  ${process.env.CODE_SIGN_TOOL_PATH}/CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`
+          );
+
+          try {
+            fs.writeFileSync(
+              `${process.env.CODE_SIGN_TOOL_PATH}/conf/code_sign_tool.properties`,
+              content,
+              { encoding: "utf8", flag: "w" }
             );
-            exec(
-              `${process.env.CODE_SIGN_TOOL_PATH}/CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`,
-              function (err, stdout, stderr) {
-                if (err || stderr) {
-                  core.error(stderr);
-                  core.error(err);
-                  core.setFailed(stderr);
-                  return;
-                }
-                // Done.
-                core.info("\tDone SIGNING");
-                if (stdout.includes("Error")) {
-                  core.error(stdout);
-                  core.setFailed(stdout);
-                } else {
-                  core.info(stdout);
-                }
-
-                // const files = fs.readdirSync(`./${folder}/ssl-output`);
-                // core.info(`SSL-OUTPUT: ${files}`);
-
-                // files.forEach((file) => {
-                //   core.info(__dirname + `/${folder}/ssl-output/` + file);
-                //   core.info(path.join(__dirname + file));
-
-                //   fs.copyFile(
-                //     path.join(__dirname + `/${folder}/ssl-output/` + file),
-                //     path.join(__dirname + "/" + `${file}.signed`),
-                //     (err) => {
-                //       if (!err) {
-                //         core.info(file + " has been copied!");
-                //       } else {
-                //         core.error(`COPY FAILED`);
-                //         core.error(err);
-
-                //         core.setFailed(error.message);
-                //       }
-                //     }
-                //   );
-                // });
-              }
-            );
-          } else {
-            core.info("\tRUNNING REAL USE CASE");
+            // file written successfully
+          } catch (err) {
+            core.error(err);
+            core.setFailed(err);
+            return;
           }
+          exec(
+            isTest
+              ? `${process.env.CODE_SIGN_TOOL_PATH}/CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`
+              : `${process.env.CODE_SIGN_TOOL_PATH}/CodeSignTool.bat sign -username="${sslUsername}" -password="${sslPassword}" -totp_secret="${sslSecretPassword}" -input_file_path="${filePath}" -override`,
+            function (err, stdout, stderr) {
+              if (err || stderr) {
+                core.error(stderr);
+                core.error(err);
+                core.setFailed(stderr);
+                return;
+              }
+              // Done.
+              core.info("\tDone SIGNING");
+              if (stdout.includes("Error")) {
+                core.error(stdout);
+                core.setFailed(stdout);
+              } else {
+                core.info(stdout);
+              }
+
+              // const files = fs.readdirSync(`./${folder}/ssl-output`);
+              // core.info(`SSL-OUTPUT: ${files}`);
+
+              // files.forEach((file) => {
+              //   core.info(__dirname + `/${folder}/ssl-output/` + file);
+              //   core.info(path.join(__dirname + file));
+
+              //   fs.copyFile(
+              //     path.join(__dirname + `/${folder}/ssl-output/` + file),
+              //     path.join(__dirname + "/" + `${file}.signed`),
+              //     (err) => {
+              //       if (!err) {
+              //         core.info(file + " has been copied!");
+              //       } else {
+              //         core.error(`COPY FAILED`);
+              //         core.error(err);
+
+              //         core.setFailed(error.message);
+              //       }
+              //     }
+              //   );
+              // });
+            }
+          );
         });
 
         // if (!fs.existsSync(`./dist/${folder}/ssl-output`)) {

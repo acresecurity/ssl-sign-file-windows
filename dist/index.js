@@ -19694,10 +19694,10 @@ async function run() {
         core.setFailed(error.message);
         return;
       })
-      .pipe(fs.createWriteStream(__nccwpck_require__.ab + "CodeSignTool.zip"))
+      .pipe(fs.createWriteStream(__dirname + "/" + zipFile))
       .on("finish", function () {
         core.info("finished downloading zip");
-        var zip = new admZip(__nccwpck_require__.ab + "CodeSignTool.zip");
+        var zip = new admZip(__dirname + "/" + zipFile);
         core.info("start unzip");
         zip.extractAllTo(__dirname + "/", true);
         core.info("finished unzip");

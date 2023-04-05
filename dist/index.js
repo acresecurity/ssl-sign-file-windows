@@ -19661,10 +19661,10 @@ let exec = __nccwpck_require__(3129).exec;
 // most @actions toolkit packages have async methods
 async function run() {
   try {
-    core.info(`START ...`);
+    core.info(`---START`);
     const filePath =
       core.getInput("filepath") ||
-      "C:\\Users\\admin\\git-repos\\ssl-sign-file-windows\\fake-file.ps1";
+      path.resolve(__dirname, "..") + "\\fake-file.ps1";
     const sslUsername = core.getInput("sslusername");
     const sslPassword = core.getInput("sslpassword");
     const sslSecretPassword = core.getInput("sslsecretpassword");
@@ -19679,14 +19679,9 @@ async function run() {
     core.info(
       `Running windows sign action as test: [${isTest}] for [${filePath}] ...`
     );
-    core.info(`Running with sslClientId: [${sslClientId}]...`);
     const zipFile = "CodeSignTool.zip";
-    const zipFileLocation = "dist/CodeSignTool.zip";
 
-    const extractEntryTo = `./`;
-    const outputDir = `./`;
-
-    core.info("Downloading zip...");
+    core.info("---Downloading zip");
     request
       .get("https://www.ssl.com/download/codesigntool-for-windows/")
       .on("error", function (error) {
@@ -19696,33 +19691,25 @@ async function run() {
       })
       .pipe(fs.createWriteStream(__dirname + "/" + zipFile))
       .on("finish", function () {
-        core.info("finished downloading zip");
+        core.info("---Finished downloading zip");
         var zip = new admZip(__dirname + "/" + zipFile);
-        core.info("start unzip");
+        core.info("---Start unzip");
         zip.extractAllTo(__dirname + "/", true);
-        core.info("finished unzip");
+        core.info("---Finished unzip");
         let foundUnzipped = fs
           .readdirSync(__dirname + "/")
           .filter((fn) => fn.startsWith("CodeSignTool-v"));
         if (!foundUnzipped || foundUnzipped.length == 0) {
-          core.warning(
-            "Could not find unzipped CodeSignTool, using LocalCodeSignTool"
-          );
-          core.info(fs.readdirSync("./"));
-
-          var zip2 = new admZip("./LocalCodeSignTool.zip");
-          zip2.extractAllTo(".", true);
-          foundUnzipped = fs
-            .readdirSync("./")
-            .filter((fn) => fn.startsWith("CodeSignTool-v"));
+          core.error("Could not find unzipped CodeSignTool");
+          core.setFailed(error.message);
+          return;
         }
         const folder = foundUnzipped[0];
-        core.info(`Using folder: ${folder}`);
+        core.info(`---Using unzipped folder: [${folder}]`);
 
         exec("pwd", function (err, stdout, stderr) {
-          core.info("PWD:  " + stdout);
+          core.info("--PWD:  " + stdout);
           const pwd = stdout.trim();
-          core.error(stderr);
 
           core.info(
             "CODE_SIGN_TOOL_PATH-before: \t" + process.env.CODE_SIGN_TOOL_PATH
@@ -19733,27 +19720,14 @@ async function run() {
           );
 
           core.info("__dirname: \t" + __dirname);
-          exec(`ls ${__dirname}`, function (err, stdout, stderr) {
-            core.info(`------ls ${__dirname}---   ` + stdout);
-          });
 
           core.info(`\t${isTest ? "RUNNING TEST" : "RUNNING REAL USE CASE"}`);
-
-          wait(2000);
 
           let content = isTest
             ? `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://oauth-sandbox.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs-try.ssl.com\nTSA_URL=http://ts.ssl.com`
             : `CLIENT_ID=${sslClientId}\nOAUTH2_ENDPOINT=https://login.ssl.com/oauth2/token\nCSC_API_ENDPOINT=https://cs.ssl.com\nTSA_URL=http://ts.ssl.com`;
-          exec(
-            `ls ${process.env.CODE_SIGN_TOOL_PATH}/conf`,
-            function (err, stdout, stderr) {
-              core.info(
-                `------ls ${process.env.CODE_SIGN_TOOL_PATH}/conf---   ` +
-                  stdout
-              );
-            }
-          );
 
+          core.info(`---Writing updated conf file`);
           try {
             fs.writeFileSync(
               `${process.env.CODE_SIGN_TOOL_PATH}/conf/code_sign_tool.properties`,
@@ -19766,6 +19740,7 @@ async function run() {
             core.setFailed(err);
             return;
           }
+          core.info(`---Executing SIGN Action`);
           exec(
             isTest
               ? `${process.env.CODE_SIGN_TOOL_PATH}/CodeSignTool.bat sign -username='esigner_demo' -password='esignerDemo#1' -totp_secret='RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=' -input_file_path="${filePath}" -override`
@@ -19778,46 +19753,23 @@ async function run() {
                 return;
               }
               // Done.
-              core.info("\tDone SIGNING");
+              core.info("---Done SIGNING, check for error");
               if (stdout.includes("Error")) {
                 core.error(stdout);
                 core.setFailed(stdout);
+                return;
               } else {
                 core.info(stdout);
+                core.info("---SUCCESS");
               }
-
-              // const files = fs.readdirSync(`./${folder}/ssl-output`);
-              // core.info(`SSL-OUTPUT: ${files}`);
-
-              // files.forEach((file) => {
-              //   core.info(__dirname + `/${folder}/ssl-output/` + file);
-              //   core.info(path.join(__dirname + file));
-
-              //   fs.copyFile(
-              //     path.join(__dirname + `/${folder}/ssl-output/` + file),
-              //     path.join(__dirname + "/" + `${file}.signed`),
-              //     (err) => {
-              //       if (!err) {
-              //         core.info(file + " has been copied!");
-              //       } else {
-              //         core.error(`COPY FAILED`);
-              //         core.error(err);
-
-              //         core.setFailed(error.message);
-              //       }
-              //     }
-              //   );
-              // });
             }
           );
         });
-
-        // if (!fs.existsSync(`./dist/${folder}/ssl-output`)) {
-        //   fs.mkdirSync(`./dist/${folder}/ssl-output`);
-        // }
       });
   } catch (error) {
+    core.info(error);
     core.setFailed(error.message);
+    return;
   }
 }
 

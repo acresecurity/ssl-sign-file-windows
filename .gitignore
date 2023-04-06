@@ -1,4 +1,5 @@
 node_modules/
+CodeSignTool-v1.2.7-windows/
 
 # Editors
 .vscode/
@@ -65,3 +66,5 @@ typings/
 
 # next.js build output
 .next
+
+.

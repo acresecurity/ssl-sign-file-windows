@@ -19699,13 +19699,20 @@ async function run() {
         let foundUnzipped = fs
           .readdirSync(__dirname + "/")
           .filter((fn) => fn.startsWith("CodeSignTool-v"));
+        let foundBat = fs
+          .readdirSync(__dirname + "/")
+          .filter((fn) => fn.startsWith("CodeSignTool.bat"));
         if (!foundUnzipped || foundUnzipped.length == 0) {
-          core.error("Could not find unzipped CodeSignTool");
-          core.setFailed(error.message);
-          return;
+          foundUnzipped = null;
+          if (!foundBat || foundBat.length == 0) {
+            foundBat = null;
+            core.error("Could not find unzipped CodeSignTool OR bat file");
+            core.setFailed(error.message);
+            return;
+          }
         }
-        const folder = foundUnzipped[0];
-        core.info(`---Using unzipped folder: [${folder}]`);
+        const folder = foundUnzipped ? foundUnzipped[0] : "";
+        core.info(`---Using unzipped folder or bat: [${foundUnzipped ? folder : foundBat[0]}]`);
 
         exec("pwd", function (err, stdout, stderr) {
           core.info("--PWD:  " + stdout);
@@ -19714,7 +19721,7 @@ async function run() {
           core.info(
             "CODE_SIGN_TOOL_PATH-before: \t" + process.env.CODE_SIGN_TOOL_PATH
           );
-          process.env.CODE_SIGN_TOOL_PATH = `${__dirname}\\${folder}`;
+          process.env.CODE_SIGN_TOOL_PATH = foundUnzipped ? `${__dirname}\\${folder}` : `${__dirname}`;
           core.info(
             "CODE_SIGN_TOOL_PATH-after: \t" + process.env.CODE_SIGN_TOOL_PATH
           );

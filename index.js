@@ -3,8 +3,126 @@ const wait = require("./wait");
 const admZip = require("adm-zip");
 const request = require("superagent");
 const fs = require("fs");
+const fsAsync = require("fs/promises");
 const path = require("path");
+const assert = require("assert");
 let exec = require("child_process").exec;
+let execFile = require("child_process").execFile;
+
+function fail(errorOrMessage) {
+  core.error(errorOrMessage);
+  core.setFailed(errorOrMessage);
+}
+
+/**
+ * Unpacks the CodeSign tool from `${targetDir}/${zipFileName}`.
+ * @param {string} targetDir - the parent directory of the zip file.
+ * @param {string} zipFileName - name of the zip file to unpack.
+ */
+async function unpackCodesign(targetDir, zipFileName) {
+  core.info(`---Unpacking ${zipFileName}...`);
+  const zip = new admZip(path.join(targetDir, zipFileName));
+  zip.extractAllTo(targetDir, true);
+  core.info("---Finished unpacking.");
+}
+
+/**
+ * Finds the code sign tool's batch script.
+ * @param {string} targetDir - the directory to search.
+ */
+async function findCodesign(targetDir) {
+  const filesInDirectory = await fsAsync.readdir(targetDir);
+  const batFiles = filesInDirectory.filter((fn) =>
+    fn.startsWith("CodeSignTool.bat"),
+  );
+  return batFiles.length > 0 ? batFiles[0] : null;
+}
+
+/**
+ * Signs the given file.
+ * @param {string} codeSignPath - the directory housing CodeSign files.
+ * @param {string} targetFile - the file to sign.
+ * @param {boolean} isTest - whether this is a test run.
+ * @param {object} sslCredentials - credentials for SSL signing. Overridden during tests.
+ * @param {string} sslCredentials.username
+ * @param {string} sslCredentials.password
+ * @param {string} sslCredentials.totpSecret
+ * @param {string} sslCredentials.clientId
+ */
+async function sign(codeSignPath, targetFile, isTest, sslCredentials) {
+  process.env.CODE_SIGN_TOOL_PATH = codeSignPath;
+
+  await saveProperties(sslCredentials.clientId, isTest);
+  let message = "Running real use case!";
+  if (isTest) {
+    message = "Running test!";
+
+    sslCredentials.username = "esigner_demo";
+    sslCredentials.password = "esignerDemo#1";
+    sslCredentials.totpSecret = "RDXYgV9qju+6/7GnMf1vCbKexXVJmUVr+86Wq/8aIGg=";
+  }
+
+  core.info(message);
+  execFile(
+    path.join(process.env.CODE_SIGN_TOOL_PATH, "CodeSignTool.bat"),
+    [
+      "sign",
+      `-username='${sslCredentials.username}'`,
+      `-password='${sslCredentials.password}'`,
+      `-totp_secret='${sslCredentials.totpSecret}'`,
+      `-input_file_path='${targetFile}'`,
+      "-override",
+    ],
+    (error, stdout, stderr) => {},
+  );
+}
+
+/**
+ * @param {string} sslClientId
+ * @param {boolean} isTest
+ */
+async function saveProperties(sslClientId, isTest) {
+  assert(
+    process.env.CODE_SIGN_TOOL_PATH,
+    "`process.env.CODE_SIGN_TOOL_PATH` must be defined!",
+  );
+  const properties = {
+    CLIENT_ID: sslCredentials.clientId,
+    OAUTH2_ENDPOINT: "https://login.ssl.com/oauth2/token",
+    CSC_API_ENDPOINT: "https://cs.ssl.com",
+    TSA_URL: "https://ts.ssl.com",
+  };
+
+  if (isTest) {
+    properties.OAUTH2_ENDPOINT = "https://oauth-sandbox.ssl.com/oauth2/token";
+    properties.CSC_API_ENDPOINT = "https://cs-try.ssl.com";
+  }
+
+  // This creates content of the format:
+  // KEY1=VALUE1
+  // KEY2=VALUE2
+  // (etc.)
+  const content = Object.entries()
+    .map(([key, value]) => {
+      return `${key}=${value}`;
+    })
+    .join("\n");
+
+  try {
+    await fsAsync.writeFile(
+      path.join(
+        process.env.CODE_SIGN_TOOL_PATH,
+        "conf",
+        "code_sign_tool.properties",
+      ),
+      content,
+      { encoding: "utf8", flag: "w" },
+    );
+  } catch (err) {
+    fail(err);
+    return;
+  }
+}
 
 // most @actions toolkit packages have async methods
 async function run() {
@@ -25,7 +143,7 @@ async function run() {
     // Sandbox credentials are publicly available at https://www.ssl.com/guide/esigner-demo-credentials-and-certificates/
 
     core.info(
-      `Running windows sign action as test: [${isTest}] for [${filePath}] ...`
+      `Running windows sign action as test: [${isTest}] for [${filePath}] ...`,
     );
     const zipFile = "CodeSignTool.zip";
 
@@ -39,6 +157,7 @@ async function run() {
       })
       .pipe(fs.createWriteStream(__dirname + "/" + zipFile))
       .on("finish", function () {
+        // Done downloading
         core.info("---Finished downloading zip");
         var zip = new admZip(__dirname + "/" + zipFile);
         core.info("---Start unzip");
@@ -60,18 +179,22 @@ async function run() {
           }
         }
         const folder = foundUnzipped ? foundUnzipped[0] : "";
-        core.info(`---Using unzipped folder or bat: [${foundUnzipped ? folder : foundBat[0]}]`);
+        core.info(
+          `---Using unzipped folder or bat: [${foundUnzipped ? folder : foundBat[0]}]`,
+        );
 
         exec("pwd", function (err, stdout, stderr) {
           core.info("--PWD:  " + stdout);
           const pwd = stdout.trim();
 
           core.info(
-            "CODE_SIGN_TOOL_PATH-before: \t" + process.env.CODE_SIGN_TOOL_PATH
+            "CODE_SIGN_TOOL_PATH-before: \t" + process.env.CODE_SIGN_TOOL_PATH,
           );
-          process.env.CODE_SIGN_TOOL_PATH = foundUnzipped ? `${__dirname}\\${folder}` : `${__dirname}`;
+          process.env.CODE_SIGN_TOOL_PATH = foundUnzipped
+            ? `${__dirname}\\${folder}`
+            : `${__dirname}`;
           core.info(
-            "CODE_SIGN_TOOL_PATH-after: \t" + process.env.CODE_SIGN_TOOL_PATH
+            "CODE_SIGN_TOOL_PATH-after: \t" + process.env.CODE_SIGN_TOOL_PATH,
           );
 
           core.info("__dirname: \t" + __dirname);
@@ -87,7 +210,7 @@ async function run() {
             fs.writeFileSync(
               `${process.env.CODE_SIGN_TOOL_PATH}/conf/code_sign_tool.properties`,
               content,
-              { encoding: "utf8", flag: "w" }
+              { encoding: "utf8", flag: "w" },
             );
             // file written successfully
           } catch (err) {
@@ -117,7 +240,7 @@ async function run() {
                 core.info(stdout);
                 core.info("---SUCCESS");
               }
-            }
+            },
           );
         });
       });

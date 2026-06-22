@@ -5,12 +5,14 @@ on:
   pull_request:
     branches: [main, master, develop, stage, release]
   workflow_dispatch: {}
+  release:
+    types: [published]
 permissions:
   contents: read
   security-events: write
 jobs:
   scan:
-    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@83acc3371d44331854b6f310786f3cfada416776
+    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@d747626e9fdf08eb666846a8cb92bbbd2942dc3e
     secrets:
       BLACKDUCKSCA_TOKEN: ${{ secrets.BLACKDUCKSCA_TOKEN }}
   blackducksca:

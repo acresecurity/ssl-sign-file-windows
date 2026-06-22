@@ -5,7 +5,10 @@ on:
   pull_request:
     branches: [main, master, develop, stage, release]
   workflow_dispatch: {}
+permissions:
+  contents: read
+  security-events: write
 jobs:
   scan:
-    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@d320179ffa037de187f24b1a7982ae58b9d0fcf4
+    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@83acc3371d44331854b6f310786f3cfada416776
     secrets: inherit

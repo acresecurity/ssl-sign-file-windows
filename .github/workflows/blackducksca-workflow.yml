@@ -12,7 +12,7 @@ permissions:
   security-events: write
 jobs:
   scan:
-    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@d747626e9fdf08eb666846a8cb92bbbd2942dc3e
+    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@blackduck-v1
     secrets:
       BLACKDUCKSCA_TOKEN: ${{ secrets.BLACKDUCKSCA_TOKEN }}
   blackducksca:

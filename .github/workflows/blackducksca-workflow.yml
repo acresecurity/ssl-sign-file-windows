@@ -11,4 +11,16 @@ permissions:
 jobs:
   scan:
     uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@83acc3371d44331854b6f310786f3cfada416776
-    secrets: inherit
+    secrets:
+      BLACKDUCKSCA_TOKEN: ${{ secrets.BLACKDUCKSCA_TOKEN }}
+  blackducksca:
+    needs: scan
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reflect Black Duck scan result
+        env:
+          SCAN_RESULT: ${{ needs.scan.result }}
+        run: |
+          if [ "$SCAN_RESULT" = "failure" ]; then echo "Black Duck gate failed (see the scan job)"; exit 1; fi
+          echo "Black Duck SCA gate: $SCAN_RESULT"

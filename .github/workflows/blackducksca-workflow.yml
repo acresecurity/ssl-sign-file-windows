@@ -7,5 +7,5 @@ on:
   workflow_dispatch: {}
 jobs:
   scan:
-    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@5deb4d089807a2b6f4854e9915c56b8ad4198a75
+    uses: acresecurity/aac-secops/.github/workflows/_blackducksca.yml@d320179ffa037de187f24b1a7982ae58b9d0fcf4
     secrets: inherit

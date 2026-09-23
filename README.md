@@ -60,13 +60,13 @@ certificate.
 
 ## Development
 
+Use Node 24. This is the version that the action runs on.
+
 Build the bundle that the action runs:
 
-        NODE_OPTIONS=--openssl-legacy-provider npm run prepare
+        npm run prepare
 
-The flag is necessary on Node 17 and later. `ncc` 0.31 uses webpack 4, which hashes with MD4,
-and OpenSSL 3 removed MD4. `npm ci` and `npm install` also run this build, so they need the
-same flag.
+`npm ci` and `npm install` also run this build.
 
 Run the tests:
 

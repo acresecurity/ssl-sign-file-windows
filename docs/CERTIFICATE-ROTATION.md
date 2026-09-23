@@ -105,11 +105,10 @@ If you change the certificate but not the pinned fingerprint, the tests fail. Th
 ## Step 5. Build `dist/`
 
 ```bash
-NODE_OPTIONS=--openssl-legacy-provider npm run prepare
+npm run prepare
 ```
 
-The flag is necessary on Node 17 and later. `ncc` 0.31 uses webpack 4, which hashes with MD4,
-and OpenSSL 3 removed MD4. Without the flag the build stops with `ERR_OSSL_EVP_UNSUPPORTED`.
+Use Node 24, the version that the action runs on.
 
 `ncc` copies `certs/` to `dist/certs/`. Add that folder to git.
 

@@ -1,13 +1,24 @@
 const core = require("@actions/core");
 const admZip = require("adm-zip");
-const request = require("superagent");
 const fs = require("fs");
 const path = require("path");
 const tls = require("tls");
+const { Readable } = require("stream");
+const { pipeline } = require("stream/promises");
 const truststore = require("./truststore");
 let exec = require("child_process").exec;
 
+const DOWNLOAD_URL = "https://www.ssl.com/download/codesigntool-for-windows/";
 const EXEC_OPTIONS = { maxBuffer: 16 * 1024 * 1024 };
+
+// The old download piped any response body, so an error page became a confusing unzip failure.
+async function downloadZip(url, destination) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Download failed with ${response.status} ${response.statusText} for ${url}`);
+  }
+  await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(destination));
+}
 
 // Logs the served chain so the next root rotation is a ten second diagnosis. Never fails the step.
 function logPeerChain(host) {
@@ -72,17 +83,11 @@ async function run() {
     const zipFile = "CodeSignTool.zip";
 
     core.info("---Downloading zip");
-    request
-      .get("https://www.ssl.com/download/codesigntool-for-windows/")
-      .on("error", function (error) {
-        core.error(error);
-        core.setFailed(error.message);
-        return;
-      })
-      .pipe(fs.createWriteStream(__dirname + "/" + zipFile))
-      .on("finish", function () {
+    const zipPath = path.join(__dirname, zipFile);
+    downloadZip(DOWNLOAD_URL, zipPath)
+      .then(function () {
         core.info("---Finished downloading zip");
-        var zip = new admZip(__dirname + "/" + zipFile);
+        var zip = new admZip(zipPath);
         core.info("---Start unzip");
         zip.extractAllTo(__dirname + "/", true);
         core.info("---Finished unzip");
@@ -174,6 +179,10 @@ async function run() {
               core.setFailed(err.message);
             });
         });
+      })
+      .catch(function (error) {
+        core.error(error.message);
+        core.setFailed(error.message);
       });
   } catch (error) {
     core.info(error);

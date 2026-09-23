@@ -54,6 +54,37 @@ jobs:
           sslsecretpassword: ''
           sslclientid: ''
 
+      - name: Diagnose the failure
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          # index.js reports only stderr on failure, so CodeSignTool's real output is lost. Get it directly.
+          $dist = "${{ github.workspace }}\dist"
+
+          "===== conf/code_sign_tool.properties ====="
+          Get-Content "$dist\conf\code_sign_tool.properties" -ErrorAction SilentlyContinue
+
+          "`n===== top level of dist ====="
+          Get-ChildItem $dist | Select-Object Mode, Name | Format-Table -AutoSize | Out-String
+
+          "`n===== keytool.exe ====="
+          Get-ChildItem $dist -Recurse -Filter keytool.exe -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty FullName
+
+          "`n===== cacerts ====="
+          Get-ChildItem $dist -Recurse -Filter cacerts -ErrorAction SilentlyContinue |
+            Select-Object -ExpandProperty FullName
+
+          "`n===== CodeSignTool.bat ====="
+          Get-Content "$dist\CodeSignTool.bat" -ErrorAction SilentlyContinue
+
+          "`n===== direct run: get_credential_ids ====="
+          $out = & "$dist\CodeSignTool.bat" get_credential_ids `
+            -username=esigner_demo "-password=esignerDemo#1" 2>&1
+          $out | Out-String
+          "exit code: $LASTEXITCODE"
+
       - name: Show the signature on the test file
         shell: pwsh
         if: always()

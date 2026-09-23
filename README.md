@@ -44,3 +44,33 @@ When `false`, runs against SSL.com Production account.  Default `true`.
             sslsecretpassword: ${{ secrets.SSL_TKN }}
             sslclientid: ${{ secrets.SSL_CLIENT_ID }}
             istest: false
+
+## Trusted certificates
+
+`CodeSignTool.zip` contains its own Java runtime with a frozen truststore. That truststore
+cannot receive updates from the runner or from Windows. When SSL.com moves a server to a new
+root, every signing run fails with a `PKIX path building failed` error.
+
+The `certs/` folder holds the roots that the bundled runtime does not carry. The action adds
+them to the truststore before it signs. The fingerprint of each certificate is pinned in
+`truststore.js`, so a changed file fails the tests.
+
+Read [docs/CERTIFICATE-ROTATION.md](docs/CERTIFICATE-ROTATION.md) before you add or change a
+certificate.
+
+## Development
+
+Build the bundle that the action runs:
+
+        NODE_OPTIONS=--openssl-legacy-provider npm run prepare
+
+The flag is necessary on Node 17 and later. `ncc` 0.31 uses webpack 4, which hashes with MD4,
+and OpenSSL 3 removed MD4. `npm ci` and `npm install` also run this build, so they need the
+same flag.
+
+Run the tests:
+
+        npm test
+
+`action.yml` points at `dist/index.js`. A change to `index.js` has no effect until you build.
+The `Check dist/` workflow fails if you forget to commit the result.

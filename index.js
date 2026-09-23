@@ -1,5 +1,4 @@
 const core = require("@actions/core");
-const wait = require("./wait");
 const admZip = require("adm-zip");
 const request = require("superagent");
 const fs = require("fs");
@@ -104,9 +103,8 @@ async function run() {
         const folder = foundUnzipped ? foundUnzipped[0] : "";
         core.info(`---Using unzipped folder or bat: [${foundUnzipped ? folder : foundBat[0]}]`);
 
-        exec("pwd", function (err, stdout, stderr) {
+        exec("pwd", function (err, stdout) {
           core.info("--PWD:  " + stdout);
-          const pwd = stdout.trim();
 
           core.info(
             "CODE_SIGN_TOOL_PATH-before: \t" + process.env.CODE_SIGN_TOOL_PATH

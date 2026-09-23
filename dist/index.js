@@ -19642,23 +19642,6 @@ module.exports = {
 
 /***/ }),
 
-/***/ 4258:
-/***/ ((module) => {
-
-let wait = function (milliseconds) {
-  return new Promise((resolve) => {
-    if (typeof milliseconds !== 'number') {
-      throw new Error('milliseconds not a number');
-    }
-    setTimeout(() => resolve("done!"), milliseconds)
-  });
-};
-
-module.exports = wait;
-
-
-/***/ }),
-
 /***/ 2941:
 /***/ ((module) => {
 
@@ -19885,7 +19868,6 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(2186);
-const wait = __nccwpck_require__(4258);
 const admZip = __nccwpck_require__(6761);
 const request = __nccwpck_require__(1524);
 const fs = __nccwpck_require__(5747);
@@ -19990,9 +19972,8 @@ async function run() {
         const folder = foundUnzipped ? foundUnzipped[0] : "";
         core.info(`---Using unzipped folder or bat: [${foundUnzipped ? folder : foundBat[0]}]`);
 
-        exec("pwd", function (err, stdout, stderr) {
+        exec("pwd", function (err, stdout) {
           core.info("--PWD:  " + stdout);
-          const pwd = stdout.trim();
 
           core.info(
             "CODE_SIGN_TOOL_PATH-before: \t" + process.env.CODE_SIGN_TOOL_PATH

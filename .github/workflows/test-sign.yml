@@ -58,26 +58,25 @@ jobs:
         if: always()
         continue-on-error: true
         shell: pwsh
+        env:
+          # index.js sets this in its own process only, so it does not reach this step.
+          CODE_SIGN_TOOL_PATH: ${{ github.workspace }}\dist
         run: |
-          # index.js reports only stderr on failure, so CodeSignTool's real output is lost. Get it directly.
           $dist = "${{ github.workspace }}\dist"
 
-          "===== conf/code_sign_tool.properties ====="
-          Get-Content "$dist\conf\code_sign_tool.properties" -ErrorAction SilentlyContinue
+          "===== release-notes.txt ====="
+          Get-Content "$dist\release-notes.txt" -ErrorAction SilentlyContinue
 
-          "`n===== top level of dist ====="
-          Get-ChildItem $dist | Select-Object Mode, Name | Format-Table -AutoSize | Out-String
+          "`n===== logs that CodeSignTool wrote ====="
+          Get-ChildItem "$dist\logs" -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+            "----- $($_.FullName) -----"
+            Get-Content $_.FullName -ErrorAction SilentlyContinue
+          }
 
-          "`n===== keytool.exe ====="
-          Get-ChildItem $dist -Recurse -Filter keytool.exe -ErrorAction SilentlyContinue |
-            Select-Object -ExpandProperty FullName
-
-          "`n===== cacerts ====="
-          Get-ChildItem $dist -Recurse -Filter cacerts -ErrorAction SilentlyContinue |
-            Select-Object -ExpandProperty FullName
-
-          "`n===== CodeSignTool.bat ====="
-          Get-Content "$dist\CodeSignTool.bat" -ErrorAction SilentlyContinue
+          "`n===== does the bundled JRE trust the 2022 root? ====="
+          & "$dist\jdk-11.0.2\bin\keytool.exe" -list `
+            -keystore "$dist\jdk-11.0.2\lib\security\cacerts" -storepass changeit 2>&1 |
+            Select-String -Pattern 'ssl' -Context 0,2
 
           "`n===== direct run: get_credential_ids ====="
           $out = & "$dist\CodeSignTool.bat" get_credential_ids `

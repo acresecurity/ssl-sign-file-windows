@@ -1,0 +1,60 @@
+# Proves the action can sign against the SSL.com sandbox (cs-try.ssl.com + oauth-sandbox.ssl.com).
+# No secrets: index.js hardcodes the public demo credentials when istest is true.
+name: Sandbox sign test
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths-ignore:
+      - '**.md'
+
+jobs:
+  sandbox-sign:
+    name: Sign a test file against the SSL.com sandbox
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The committed fake-file.ps1 is empty, and an empty file is not a valid signing target.
+      - name: Add content to the test file
+        shell: pwsh
+        run: Set-Content -Path "${{ github.workspace }}\fake-file.ps1" -Value 'Write-Output "sandbox sign test"'
+
+      - name: Show the chain that cs-try.ssl.com serves
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          # Diagnostic only. It accepts any certificate because it sends no data and trusts nothing it reads.
+          $client = [System.Net.Sockets.TcpClient]::new('cs-try.ssl.com', 443)
+          $ssl = [System.Net.Security.SslStream]::new($client.GetStream(), $false, { $true })
+          $ssl.AuthenticateAsClient('cs-try.ssl.com')
+          $cert = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new($ssl.RemoteCertificate)
+          $chain = [System.Security.Cryptography.X509Certificates.X509Chain]::new()
+          $null = $chain.Build($cert)
+          $chain.ChainElements | ForEach-Object {
+            "subject    : $($_.Certificate.Subject)"
+            "issuer     : $($_.Certificate.Issuer)"
+            "not after  : $($_.Certificate.NotAfter)"
+            "sha256     : $($_.Certificate.GetCertHashString('SHA256'))"
+            ""
+          }
+          $ssl.Dispose(); $client.Dispose()
+
+      # Runs dist/index.js from this commit, not from the published `latest` tag.
+      - name: Sign the test file
+        uses: ./
+        with:
+          filepath: ${{ github.workspace }}\fake-file.ps1
+          istest: 'true'
+          # Empty values make index.js fall back to the sandbox demo account.
+          sslusername: ''
+          sslpassword: ''
+          sslsecretpassword: ''
+          sslclientid: ''
+
+      - name: Show the signature on the test file
+        shell: pwsh
+        if: always()
+        run: Get-AuthenticodeSignature -FilePath "${{ github.workspace }}\fake-file.ps1" | Format-List
